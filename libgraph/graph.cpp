@@ -25,7 +25,7 @@ void Edge::setInfo(std::string key, double value) {
 void Edge::dumpInfo() {
     for (auto o: data) {
         cout << "  " << o.first << " " << o.second << endl;
-    } 
+    }
 }
 
 /////////////////////////////////////////////////////////
@@ -51,12 +51,14 @@ Edge* Vertex::find(int id) {
             return e;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 void Vertex::addEdge(int to) {
-    Edge *edge = new Edge(getId(), to);
-    edges.push_back(edge);
+    if (find(to) == nullptr) {
+        Edge *edge = new Edge(getId(), to);
+        edges.push_back(edge);
+    }
 }
 
 std::vector<Edge*> Vertex::getEdges() {
@@ -65,8 +67,9 @@ std::vector<Edge*> Vertex::getEdges() {
 
 /////////////////////////////////////////////////////////
 
-Graph::Graph() {
+Graph::Graph(bool _unidirected) {
     vertexes = std::unordered_map<int, Vertex*>();
+    unidirected = _unidirected;
 }
 
 Graph::~Graph() {
@@ -105,6 +108,14 @@ void Graph::addEdge(int from, int to) {
     if (vfrom != nullptr) {
         vfrom->addEdge(to);
     }
+
+    if (unidirected) {
+        Vertex *vto = getVertex(to);
+
+        if (vto != nullptr) {
+            vto->addEdge(from);
+        }
+    }
 }
 
 void Graph::setEdgeInfo(int from, int to, std::string key, double value) {
@@ -119,25 +130,26 @@ double Graph::getEdgeInfo(int from, int to, string key) {
     return e->getInfo(key);
 }
 
-void bfs(Graph &graph, int first,
-         std::function<void(int)> node,
-         std::function<void(int, int)> func) {
-    bool *visited = new bool[graph.vertexesSize()];
+void bfs(Graph *graph, int first,
+         function < void(int) > node,
+         function < void(int, int) > func) {
+    bool *visited = new bool[graph->vertexesSize()];
     std::queue<Vertex*> queue;
 
-    for (int i = 0; i < graph.vertexesSize(); i++) visited[i] = false;
+    for (int i = 0; i < graph->vertexesSize(); i++) visited[i] = false;
 
-    queue.push(graph.getVertex(first));
+    queue.push(graph->getVertex(first));
     visited[first] = true;
 
     while (!queue.empty()) {
         Vertex* v = queue.front();
         queue.pop();
+        if (v == nullptr) { continue; }
         node(v->getId());
         for (auto e: v->getEdges()) {
             if (!visited[e->getTo()]) {
                 func(v->getId(), e->getTo());
-                queue.push(graph.getVertex(e->getTo()));
+                queue.push(graph->getVertex(e->getTo()));
                 visited[e->getTo()] = true;
             }
         }
@@ -146,13 +158,13 @@ void bfs(Graph &graph, int first,
     delete[] visited;
 }
 
-void dfs(Graph &graph, int first,
-         std::function<void(int)> node,
-         std::function<void(int, int)> func) {
-    bool *visited = new bool[graph.vertexesSize()];
+void dfs(Graph *graph, int first,
+         function < void(int) > node,
+         function < void(int, int) > func) {
+    bool *visited = new bool[graph->vertexesSize()];
     std::stack<Vertex*> stack;
 
-    stack.push(graph.getVertex(first));
+    stack.push(graph->getVertex(first));
     visited[first] = true;
 
     while (!stack.empty()) {
@@ -162,7 +174,7 @@ void dfs(Graph &graph, int first,
         for (auto e: v->getEdges()) {
             if (!visited[e->getTo()]) {
                 func(v->getId(), e->getTo());
-                stack.push(graph.getVertex(e->getTo()));
+                stack.push(graph->getVertex(e->getTo()));
                 visited[e->getTo()] = true;
             }
         }

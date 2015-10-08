@@ -1,4 +1,5 @@
 #include <exception>
+#include <functional>
 #include <iostream>
 #include <unordered_map>
 #include <map>
@@ -48,7 +49,7 @@ class Graph {
     std::unordered_map<int, Vertex*> vertexes;
 
     public:
-        Graph();
+        Graph(bool);
         ~Graph();
 
         int vertexesSize();
